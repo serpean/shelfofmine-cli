@@ -1,0 +1,26 @@
+{
+  "name": "@bookself/cli",
+  "version": "0.1.0",
+  "description": "Command-line client for your Bookself library (API and MCP bridge)",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "bookself": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
