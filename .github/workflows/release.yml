@@ -1,0 +1,44 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  # Cada instancia de Bookself descarga este fichero y lo sirve en /cli/bookself.mjs.
+  github:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - run: pnpm build
+      - run: cp dist/cli.js bookself.mjs
+      - run: gh release create "$GITHUB_REF_NAME" bookself.mjs --generate-notes --verify-tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  # Trusted publishing (OIDC): no npm token in the repo. Configure it once on npmjs.com.
+  npm:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          # npm >= 11.5 is needed for trusted publishing.
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - run: npm publish --provenance --access public

@@ -1,0 +1,2 @@
+# Supply-chain hygiene: don't install package versions published less than 14 days ago.
+minimumReleaseAge: 20160

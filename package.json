@@ -1,22 +1,32 @@
 {
-  "name": "@bookself/cli",
+  "name": "bookself",
   "version": "0.1.0",
   "description": "Command-line client for your Bookself library (API and MCP bridge)",
-  "type": "module",
+  "keywords": ["bookself", "books", "ebooks", "library", "cli", "mcp"],
+  "homepage": "https://github.com/serpean/bookself-cli#readme",
+  "bugs": "https://github.com/serpean/bookself-cli/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/serpean/bookself-cli.git"
+  },
   "license": "MIT",
+  "author": "serpean",
+  "type": "module",
   "bin": {
     "bookself": "dist/cli.js"
   },
   "files": [
     "dist"
   ],
+  "packageManager": "pnpm@10.28.0",
   "engines": {
     "node": ">=22"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm build"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
