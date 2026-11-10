@@ -8,10 +8,10 @@ import { createInterface } from 'node:readline';
 import { parseArgs } from 'node:util';
 
 /**
- * CLI de Bookself: la biblioteca desde la terminal y desde scripts, sobre la API pública con un token
- * personal (Ajustes → Conexiones e IA). `bookself mcp` hace de puente stdio → MCP remoto para clientes que
+ * CLI de Shelf of Mine: la biblioteca desde la terminal y desde scripts, sobre la API pública con un token
+ * personal (Ajustes → Conexiones e IA). `shelfofmine mcp` hace de puente stdio → MCP remoto para clientes que
  * solo admiten servidores MCP locales. Es un único fichero sin dependencias (Node 22): cada instancia lo
- * sirve en /cli/bookself.mjs.
+ * sirve en /cli/shelfofmine.mjs.
  */
 
 // --- Configuración y cliente de la API ---------------------------------------------------------
@@ -21,23 +21,36 @@ export interface Config {
   token: string;
 }
 
-export function configPath(env: NodeJS.ProcessEnv = process.env): string {
-  const base =
+function configBase(env: NodeJS.ProcessEnv): string {
+  return (
     env.XDG_CONFIG_HOME ||
-    (process.platform === 'win32' && env.APPDATA ? env.APPDATA : path.join(os.homedir(), '.config'));
-  return path.join(base, 'bookself', 'config.json');
+    (process.platform === 'win32' && env.APPDATA ? env.APPDATA : path.join(os.homedir(), '.config'))
+  );
+}
+
+export function configPath(env: NodeJS.ProcessEnv = process.env): string {
+  return path.join(configBase(env), 'shelfofmine', 'config.json');
+}
+
+/** Fichero de configuración del nombre anterior (Bookself). Se lee si no hay uno nuevo. */
+export function legacyConfigPath(env: NodeJS.ProcessEnv = process.env): string {
+  return path.join(configBase(env), 'bookself', 'config.json');
+}
+
+async function readConfigFile(file: string): Promise<Partial<Config> | null> {
+  try {
+    return JSON.parse(await readFile(file, 'utf8')) as Partial<Config>;
+  } catch {
+    return null;
+  }
 }
 
 export async function loadConfig(env: NodeJS.ProcessEnv = process.env): Promise<Partial<Config>> {
-  let saved: Partial<Config> = {};
-  try {
-    saved = JSON.parse(await readFile(configPath(env), 'utf8')) as Partial<Config>;
-  } catch {
-    /* sin configuración guardada */
-  }
+  const saved = (await readConfigFile(configPath(env))) ?? (await readConfigFile(legacyConfigPath(env))) ?? {};
+  // Las variables BOOKSELF_* son del nombre anterior y siguen funcionando.
   return {
-    url: env.BOOKSELF_URL || saved.url,
-    token: env.BOOKSELF_TOKEN || saved.token,
+    url: env.SHELFOFMINE_URL || env.BOOKSELF_URL || saved.url,
+    token: env.SHELFOFMINE_TOKEN || env.BOOKSELF_TOKEN || saved.token,
   };
 }
 
@@ -74,7 +87,7 @@ export class ApiError extends Error {
 type Query = Record<string, string | number | boolean | undefined>;
 
 /** Cliente mínimo de la API pública (/api/v1) con token Bearer. Usa fetch de Node 22, sin dependencias. */
-export class BookselfClient {
+export class ShelfOfMineClient {
   constructor(
     readonly config: Config,
     private readonly fetchImpl: typeof fetch = fetch,
@@ -87,7 +100,7 @@ export class BookselfClient {
   }
 
   async raw(method: string, pathname: string, opts: { query?: Query; json?: unknown; body?: FormData } = {}) {
-    const headers: Record<string, string> = { authorization: `Bearer ${this.config.token}`, 'user-agent': 'bookself-cli' };
+    const headers: Record<string, string> = { authorization: `Bearer ${this.config.token}`, 'user-agent': 'shelfofmine-cli' };
     let body: string | FormData | undefined = opts.body;
     if (opts.json !== undefined) {
       headers['content-type'] = 'application/json';
@@ -122,9 +135,9 @@ export class BookselfClient {
 
 // --- Comandos ----------------------------------------------------------------------------------
 
-const HELP = `bookself — your Bookself library from the terminal
+const HELP = `shelfofmine — your Shelf of Mine library from the terminal
 
-Usage: bookself <command> [options]
+Usage: shelfofmine <command> [options]
 
 Setup
   login [--url URL] [--token TOKEN]   Save your instance URL and personal token
@@ -159,7 +172,8 @@ Options
   --json                              Print raw JSON
   -h, --help                          Show this help
 
-Environment: BOOKSELF_URL and BOOKSELF_TOKEN override the saved configuration.`;
+Environment: SHELFOFMINE_URL and SHELFOFMINE_TOKEN override the saved configuration
+(the old names BOOKSELF_URL and BOOKSELF_TOKEN also work).`;
 
 const OPTIONS = {
   url: { type: 'string' },
@@ -236,9 +250,9 @@ export async function run(argv: string[], out: Out = (l = '') => process.stdout.
 
   if (command === 'login') {
     const saved = await loadConfig();
-    const url = normalizeUrl(o.url ?? saved.url ?? (await prompt('Bookself URL (e.g. https://books.example.com): ')));
+    const url = normalizeUrl(o.url ?? saved.url ?? (await prompt('Shelf of Mine URL (e.g. https://shelfofmine.com): ')));
     const token = o.token ?? (await prompt('Personal token (Settings → Connections & AI): '));
-    const client = new BookselfClient({ url, token });
+    const client = new ShelfOfMineClient({ url, token });
     const me = await client.get<{ user: { email: string } }>('/me');
     const file = await saveConfig({ url, token });
     return out(`Signed in as ${me.user.email}. Configuration saved to ${file}`);
@@ -249,8 +263,8 @@ export async function run(argv: string[], out: Out = (l = '') => process.stdout.
   }
 
   const config = await loadConfig();
-  if (!config.url || !config.token) throw new UsageError('Not configured. Run `bookself login` first.');
-  const client = new BookselfClient(config as Config);
+  if (!config.url || !config.token) throw new UsageError('Not configured. Run `shelfofmine login` first.');
+  const client = new ShelfOfMineClient(config as Config);
 
   switch (command) {
     case 'whoami': {
@@ -302,7 +316,7 @@ export async function run(argv: string[], out: Out = (l = '') => process.stdout.
     }
     case 'tag': {
       const [action, tag, ...ids] = args;
-      if (action !== 'add' && action !== 'remove') throw new UsageError('Usage: bookself tag add|remove TAG ID...');
+      if (action !== 'add' && action !== 'remove') throw new UsageError('Usage: shelfofmine tag add|remove TAG ID...');
       if (!ids.length) throw new UsageError('Missing book ids');
       const res = await client.api<{ affected: number }>('POST', '/books/bulk', {
         json: { ids, action: `${action}_tags`, tags: [need(tag, 'tag')] },
@@ -327,7 +341,7 @@ export async function run(argv: string[], out: Out = (l = '') => process.stdout.
         });
         return print(res, () => out(`${res.affected} books updated.`));
       }
-      throw new UsageError('Usage: bookself shelf create NAME | shelf add|remove SHELF_ID ID...');
+      throw new UsageError('Usage: shelfofmine shelf create NAME | shelf add|remove SHELF_ID ID...');
     }
     case 'highlights': {
       type Note = { bookTitle?: string; kind: string; text: string | null; note: string | null; chapter: string | null };
@@ -393,7 +407,7 @@ export async function run(argv: string[], out: Out = (l = '') => process.stdout.
       return out(`Saved ${target}`);
     }
     case 'upload': {
-      if (!args.length) throw new UsageError('Usage: bookself upload FILE...');
+      if (!args.length) throw new UsageError('Usage: shelfofmine upload FILE...');
       const form = new FormData();
       for (const f of args) form.append('file', new Blob([await readFile(f)]), path.basename(f));
       const res = await client.api<{ results: { name: string; status: string; bookId?: string; error?: string }[] }>(
@@ -407,14 +421,14 @@ export async function run(argv: string[], out: Out = (l = '') => process.stdout.
     }
     case 'export': {
       const data = await client.get<unknown>('/export');
-      const target = o.out ?? `bookself-export-${new Date().toISOString().slice(0, 10)}.json`;
+      const target = o.out ?? `shelfofmine-export-${new Date().toISOString().slice(0, 10)}.json`;
       await writeFile(target, JSON.stringify(data, null, 2));
       return out(`Saved ${target}`);
     }
     case 'mcp':
       return mcpBridge(client);
     default:
-      throw new UsageError(`Unknown command: ${command}. Run \`bookself --help\`.`);
+      throw new UsageError(`Unknown command: ${command}. Run \`shelfofmine --help\`.`);
   }
 }
 
@@ -422,7 +436,7 @@ export async function run(argv: string[], out: Out = (l = '') => process.stdout.
  * Puente stdio para clientes MCP que solo lanzan servidores locales: lee mensajes JSON-RPC por líneas de
  * stdin, los envía al servidor remoto (/mcp) con el token y escribe las respuestas en stdout.
  */
-async function mcpBridge(client: BookselfClient) {
+async function mcpBridge(client: ShelfOfMineClient) {
   const rl = createInterface({ input: process.stdin, crlfDelay: Infinity });
   const write = (msg: unknown) => process.stdout.write(`${JSON.stringify(msg)}\n`);
   const pending: Promise<void>[] = [];
@@ -461,8 +475,8 @@ function isMain(): boolean {
 
 if (isMain()) {
   run(process.argv.slice(2)).catch((err: unknown) => {
-    if (err instanceof UsageError || err instanceof ApiError) process.stderr.write(`bookself: ${err.message}\n`);
-    else process.stderr.write(`bookself: ${(err as Error)?.message ?? err}\n`);
+    if (err instanceof UsageError || err instanceof ApiError) process.stderr.write(`shelfofmine: ${err.message}\n`);
+    else process.stderr.write(`shelfofmine: ${(err as Error)?.message ?? err}\n`);
     process.exitCode = err instanceof UsageError ? 2 : 1;
   });
 }

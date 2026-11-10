@@ -4,7 +4,7 @@ on:
     tags: ['v*']
 
 jobs:
-  # Cada instancia de Bookself descarga este fichero y lo sirve en /cli/bookself.mjs.
+  # Cada instancia de Shelf of Mine descarga este fichero y lo sirve en /cli/shelfofmine.mjs.
   github:
     runs-on: ubuntu-latest
     permissions:
@@ -19,8 +19,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
       - run: pnpm build
-      - run: cp dist/cli.js bookself.mjs
-      - run: gh release create "$GITHUB_REF_NAME" bookself.mjs --generate-notes --verify-tag
+      # bookself.mjs: el mismo fichero con el nombre anterior, para las instancias que aún lo descargan así.
+      - run: cp dist/cli.js shelfofmine.mjs && cp dist/cli.js bookself.mjs
+      - run: gh release create "$GITHUB_REF_NAME" shelfofmine.mjs bookself.mjs --generate-notes --verify-tag
         env:
           GH_TOKEN: ${{ github.token }}
 
