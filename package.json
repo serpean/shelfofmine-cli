@@ -1,18 +1,19 @@
 {
-  "name": "bookself",
-  "version": "0.1.0",
-  "description": "Command-line client for your Bookself library (API and MCP bridge)",
-  "keywords": ["bookself", "books", "ebooks", "library", "cli", "mcp"],
-  "homepage": "https://github.com/serpean/bookself-cli#readme",
-  "bugs": "https://github.com/serpean/bookself-cli/issues",
+  "name": "shelfofmine",
+  "version": "0.2.0",
+  "description": "Command-line client for your Shelf of Mine library (API and MCP bridge)",
+  "keywords": ["shelfofmine", "books", "ebooks", "library", "cli", "mcp"],
+  "homepage": "https://github.com/serpean/shelfofmine-cli#readme",
+  "bugs": "https://github.com/serpean/shelfofmine-cli/issues",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/serpean/bookself-cli.git"
+    "url": "git+https://github.com/serpean/shelfofmine-cli.git"
   },
   "license": "MIT",
   "author": "serpean",
   "type": "module",
   "bin": {
+    "shelfofmine": "dist/cli.js",
     "bookself": "dist/cli.js"
   },
   "files": [
