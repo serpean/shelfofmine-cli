@@ -1,6 +1,6 @@
 # shelfofmine
 
-Command-line client for [Shelf of Mine](https://shelfofmine.com), a personal library for your EPUB and PDF books in Google Drive.
+Command-line client for [Shelf of Mine](https://www.shelfofmine.com), a personal library for your EPUB and PDF books in Google Drive.
 
 Use it to search your library, change reading status, read highlights and export your data from the terminal or from scripts. It also includes `shelfofmine mcp`, a stdio bridge for AI assistants that only support local MCP servers.
 
@@ -23,7 +23,7 @@ npx shelfofmine --help
 Each Shelf of Mine instance also serves the same file at `/cli/shelfofmine.mjs`:
 
 ```bash
-curl -fsSLo shelfofmine.mjs https://shelfofmine.com/cli/shelfofmine.mjs
+curl -fsSLo shelfofmine.mjs https://www.shelfofmine.com/cli/shelfofmine.mjs
 node shelfofmine.mjs --help
 ```
 
@@ -33,7 +33,7 @@ node shelfofmine.mjs --help
 2. Log in:
 
    ```bash
-   shelfofmine login --url https://shelfofmine.com
+   shelfofmine login --url https://www.shelfofmine.com
    ```
 
 The CLI saves the URL and token in `~/.config/shelfofmine/config.json` (or `$XDG_CONFIG_HOME/shelfofmine/config.json`), readable only by you. The environment variables `SHELFOFMINE_URL` and `SHELFOFMINE_TOKEN` override the saved values.
@@ -63,7 +63,7 @@ Shelf of Mine has a remote MCP server at `/mcp`. If your assistant only supports
       "command": "npx",
       "args": ["-y", "shelfofmine", "mcp"],
       "env": {
-        "SHELFOFMINE_URL": "https://shelfofmine.com",
+        "SHELFOFMINE_URL": "https://www.shelfofmine.com",
         "SHELFOFMINE_TOKEN": "your-personal-token"
       }
     }

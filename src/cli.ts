@@ -250,7 +250,7 @@ export async function run(argv: string[], out: Out = (l = '') => process.stdout.
 
   if (command === 'login') {
     const saved = await loadConfig();
-    const url = normalizeUrl(o.url ?? saved.url ?? (await prompt('Shelf of Mine URL (e.g. https://shelfofmine.com): ')));
+    const url = normalizeUrl(o.url ?? saved.url ?? (await prompt('Shelf of Mine URL (e.g. https://www.shelfofmine.com): ')));
     const token = o.token ?? (await prompt('Personal token (Settings → Connections & AI): '));
     const client = new ShelfOfMineClient({ url, token });
     const me = await client.get<{ user: { email: string } }>('/me');
