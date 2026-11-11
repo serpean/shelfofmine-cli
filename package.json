@@ -1,6 +1,6 @@
 {
   "name": "shelfofmine",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Command-line client for your Shelf of Mine library (API and MCP bridge)",
   "keywords": ["shelfofmine", "books", "ebooks", "library", "cli", "mcp"],
   "homepage": "https://github.com/serpean/shelfofmine-cli#readme",
